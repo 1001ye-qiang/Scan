@@ -6,6 +6,7 @@
 #include <sstream>
 
 #include <process.h>
+#include  <io.h>
 
 #include "DirContainer.h"
 #include "HttpCheckList.h"
@@ -54,15 +55,43 @@ unsigned int __stdcall StartThread(void *pParam)
 	return (unsigned int)0;
 }
 
-#define MAX_THREAD 4
+static int MAX_THREAD = 4;
+
+void ParseArgs(int argc, char * argv[])
+{
+	for(int i = 2; i < argc; ++i)
+	{
+		if(argv[i][0] == '-')
+		{
+			if(strcmp(argv[i], "-t") == 0 || strcmp(argv[i], "-thread") == 0)
+			{
+				MAX_THREAD = atoi(argv[i+1]);
+			}
+		}
+	}
+}
 
 int main(int argc, char* argv[])
 {
+	if(argc < 2) 
+	{
+		cout << "Please, specified file!!!" << endl;
+		return -1;
+	}
+	ParseArgs(argc, argv);
+
 	curl_global_init(CURL_GLOBAL_DEFAULT); 
 
 
 	// prepare share data
-	CDirContainer * dir = new CDirContainer("./Test.txt");
+	if(_access(argv[1], 4) == -1)
+	{
+		cout << "File not exist or no access right!!!" << endl;
+		return -1;
+	}
+
+	CDirContainer * dir = new CDirContainer(argv[1]);
+	cout << "File name: " << argv[1] << endl;
 
 	HANDLE gHANDLEhSemaphore = CreateSemaphore( 
 								NULL,           // default security attributes
@@ -85,6 +114,7 @@ int main(int argc, char* argv[])
 	{
 		HANDLE hThread1 = (HANDLE)_beginthreadex(NULL, 0, &StartThread, (void *)td, 0, &uiThreadId1);
 	}
+	cout << "Thread count: " << MAX_THREAD << endl;
 	
 	//cout << (new CHttpCheckList())->Check("http://192.168.1.139:38870/gm/") << endl; return 0;
 
