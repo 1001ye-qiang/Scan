@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Scan", "Scan\Scan.vcxproj", "{BA570F4F-DB05-4156-B547-ADC251C6FA04}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BA570F4F-DB05-4156-B547-ADC251C6FA04}.Debug|Win32.ActiveCfg = Debug|Win32
+		{BA570F4F-DB05-4156-B547-ADC251C6FA04}.Debug|Win32.Build.0 = Debug|Win32
+		{BA570F4F-DB05-4156-B547-ADC251C6FA04}.Release|Win32.ActiveCfg = Release|Win32
+		{BA570F4F-DB05-4156-B547-ADC251C6FA04}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
