@@ -3,7 +3,7 @@
 #include <fstream>
 
 
-CDirContainer::CDirContainer(string path)
+CFileContainer::CFileContainer(string path, string dir_path)
 {
 	m_mutex = ::CreateMutex(NULL, FALSE, NULL);
 
@@ -16,21 +16,33 @@ CDirContainer::CDirContainer(string path)
 		Add(line);
 	}
 
+	file.clear();
+	file.close();
+
+	if(dir_path == "")
+		return;
+
+	file.open(dir_path, ios::in);
+	while(getline(file, line))
+	{
+		if(line == "") continue;
+		vecDir.push_back(line);
+	}
 }
 
 
-CDirContainer::~CDirContainer(void)
+CFileContainer::~CFileContainer(void)
 {
 	::CloseHandle(m_mutex);
 }
 
 
 
-void CDirContainer::Add(string str)
+void CFileContainer::Add(string str)
 {
 	queDir.push(str);
 }
-string CDirContainer::Get()
+string CFileContainer::Get()
 {
 	string ret = "";
 	DWORD d = WaitForSingleObject(m_mutex, INFINITE);
@@ -42,4 +54,9 @@ string CDirContainer::Get()
 	::ReleaseMutex(m_mutex);
 	return ret;
 
+}
+
+vector<string> CFileContainer::getDir() const
+{
+	return vecDir;
 }

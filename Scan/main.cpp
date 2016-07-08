@@ -4,6 +4,7 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include <vector>
 
 #include <process.h>
 #include  <io.h>
@@ -19,9 +20,8 @@ using namespace std;
 struct ThreadData
 {
 	HANDLE handle;
-	CDirContainer *dir;
+	CFileContainer *dir;
 	CCheckResult *cr;
-	string baseUrl;
 };
 
 //线程函数
@@ -36,7 +36,8 @@ unsigned int __stdcall StartThread(void *pParam)
 	string str = td->dir->Get();
 	while(str != "")
 	{
-		long ret = hcl->Check(td->baseUrl + str);
+		// check url first.
+		long ret = hcl->Check(str);
 
 		// 这个地方可能需要再来个多线程处理，不然会存在控制台输出错位
 		//cout << td->baseUrl + str << "\t" << ret << endl;
@@ -45,7 +46,26 @@ unsigned int __stdcall StartThread(void *pParam)
 		os<<ret;
 		istringstream is(os.str());
 		is>>result; 
-		td->cr->PutResult(td->baseUrl + str + "\t" + result);
+		td->cr->PutResult(str + "\t" + result);
+
+		if(td->dir->getDir().size() > 0)
+		{
+			// check url + dir second.
+			for(int i = 0; i < td->dir->getDir().size(); ++i)
+			//for(vector<string>::iterator it = td->dir->getDir().begin(); it != td->dir->getDir().end(); ++it)
+			{
+				long ret = hcl->Check(str + td->dir->getDir()[i]);
+
+				// 这个地方可能需要再来个多线程处理，不然会存在控制台输出错位
+				//cout << td->baseUrl + str << "\t" << ret << endl;
+				string result;  
+				ostringstream os;  
+				os<<ret;
+				istringstream is(os.str());
+				is>>result; 
+				td->cr->PutResult(str + td->dir->getDir()[i] + "\t" + result);
+			}
+		}
 
 		str = td->dir->Get();
 	}
@@ -56,9 +76,11 @@ unsigned int __stdcall StartThread(void *pParam)
 }
 
 static int MAX_THREAD = 4;
+static string dirPath = "";
 
 void ParseArgs(int argc, char * argv[])
 {
+	try{
 	for(int i = 2; i < argc; ++i)
 	{
 		if(argv[i][0] == '-')
@@ -67,7 +89,18 @@ void ParseArgs(int argc, char * argv[])
 			{
 				MAX_THREAD = atoi(argv[i+1]);
 			}
+			else if(strcmp(argv[i], "-d") == 0)
+			{
+				if(_access(argv[i+1], 4) == -1)
+					continue;
+
+				dirPath = argv[i+1];
+			}
 		}
+	}
+	}catch(exception e)
+	{
+		cout << "Parse args error!!" << endl;
 	}
 }
 
@@ -90,7 +123,7 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-	CDirContainer * dir = new CDirContainer(argv[1]);
+	CFileContainer * dir = new CFileContainer(argv[1], dirPath);
 	cout << "File name: " << argv[1] << endl;
 
 	HANDLE gHANDLEhSemaphore = CreateSemaphore( 
@@ -105,7 +138,6 @@ int main(int argc, char* argv[])
 	td->dir = dir;
 	td->handle = gHANDLEhSemaphore;
 	td->cr = cr;
-	td->baseUrl = "http://123.57.152.1:38870/gm/";
 
 	// create threads
 	unsigned int uiThreadId1;	
