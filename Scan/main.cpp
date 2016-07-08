@@ -24,6 +24,25 @@ struct ThreadData
 	CCheckResult *cr;
 };
 
+
+static int MAX_THREAD = 4;
+static string dirPath = "";
+static bool bCheckDomainName = false;
+static string saveFile = "";
+static fstream file;
+
+void SaveFile(string s)
+{
+	// save file
+	if(saveFile != "")
+	{
+		if(!file.is_open())
+			file.open(saveFile, ios::app);
+
+		file.write(s.c_str(), s.size());
+	}
+}
+
 //线程函数
 unsigned int __stdcall StartThread(void *pParam)
 {
@@ -37,16 +56,19 @@ unsigned int __stdcall StartThread(void *pParam)
 	while(str != "")
 	{
 		// check url first.
-		long ret = hcl->Check(str);
+		if(bCheckDomainName)
+		{
+			long ret = hcl->Check(str);
 
-		// 这个地方可能需要再来个多线程处理，不然会存在控制台输出错位
-		//cout << td->baseUrl + str << "\t" << ret << endl;
-		string result;  
-		ostringstream os;  
-		os<<ret;
-		istringstream is(os.str());
-		is>>result; 
-		td->cr->PutResult(str + "\t" + result);
+			// 这个地方可能需要再来个多线程处理，不然会存在控制台输出错位
+			//cout << td->baseUrl + str << "\t" << ret << endl;
+			string result;  
+			ostringstream os;  
+			os<<ret;
+			istringstream is(os.str());
+			is>>result; 
+			td->cr->PutResult(str + "\t" + result);
+		}
 
 		if(td->dir->getDir().size() > 0)
 		{
@@ -75,9 +97,6 @@ unsigned int __stdcall StartThread(void *pParam)
 	return (unsigned int)0;
 }
 
-static int MAX_THREAD = 4;
-static string dirPath = "";
-
 void ParseArgs(int argc, char * argv[])
 {
 	try{
@@ -95,6 +114,14 @@ void ParseArgs(int argc, char * argv[])
 					continue;
 
 				dirPath = argv[i+1];
+			}
+			else if(strcmp(argv[i], "-dn") == 0)
+			{
+				bCheckDomainName = true;
+			}
+			else if(strcmp(argv[i], "-s") == 0)
+			{
+				saveFile = argv[i+1];
 			}
 		}
 	}
@@ -158,7 +185,11 @@ int main(int argc, char* argv[])
 		{
 		case WAIT_TIMEOUT:
 			if(cr->ResultCount() > 0)
-				cout << cr->GetResult() << endl;
+			{
+				string rest = cr->GetResult() + "\n";
+				cout << rest;
+				SaveFile(rest);
+			}
 			break;
 		case WAIT_OBJECT_0:
 			--count;
